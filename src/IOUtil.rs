@@ -1,30 +1,26 @@
 use std::fs::File;
-use std::io;
-use std::io::{self, prelude::*, BufReader};
-use std::fmt::Display;
+use std::io::{prelude::*, BufReader};
 
-
-
-trait DictLoader {
-     fn load_from(path:String) -> Vec<String>;
+pub trait DictLoader {
+	fn load_from(&self, path: String) -> Vec<String>;
 }
 
-struct FileDictLoader {
-
-}
+pub struct FileDictLoader {}
 
 impl DictLoader for FileDictLoader {
-      fn load_from(path:String) -> Vec<String> {
-    let file= File::open(path);
-    let reader = BufReader::new(file);
-    let mut dict_strings: Vec <String> = Vec::new();
-    for line in reader.lines().unwrap(){
-        dict_strings.push(line);
-    }
+	fn load_from(&self, path: String) -> Vec<String> {
+		let file = File::open(path).unwrap();
+		let reader = BufReader::new(file);
+		let mut dict_strings: Vec<String> = Vec::new();
+		for line in reader.lines() {
+			match line {
+				Ok(l) => dict_strings.push(l),
+				Err(e) => {
+					eprintln!("Oops error {:?}", e)
+				}
+			}
+		}
 
-    Ok(());
-   return dict_strings; 
+		return dict_strings;
+	}
 }
-}
-
-

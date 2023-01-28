@@ -1,34 +1,42 @@
-use std::fs::File;
-//use std::io;
-use std::io::{self, prelude::*, BufReader};
-use std::fmt::Display;
-use std::collections::HashMap;
+mod IOUtil;
+mod strings_t9;
 
-fn main() {
-    match read_file("parole.txt".to_string()) {
-        Ok(()) => {},
-        Err(e) => {println!("Errore {:?}",e);}
-    }
+use IOUtil::{DictLoader, FileDictLoader};
+use clap::Parser;
+use strings_t9::{Levenshtein, T9Completer, Hamming};
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+	/// Input string to complete
+	input: String,
+
+	/// Path of dictionary file, one word per line
+	#[arg(short, long, default_value = "parole.txt")]
+	dictionary: String,
+
+	/// Algorithm to use for distance
+	#[arg(short, long, default_value = "levenshtein")]
+	algorithm: String,
 }
 
-fn read_file(file:String) -> io::Result<()>{
-    let file= File::open(file)?;
-    let reader = BufReader::new(file);
+fn main() -> Result<(), std::io::Error> {
+	let args = Args::parse();
 
-    for line in reader.lines(){
-        println!("{}", line?);
-    }
+	let algo : Option<Box<dyn T9Completer>> = match args.algorithm.to_lowercase().trim() {
+		"levenshtein" => { Some(Box::new(Levenshtein {})) },
+		"hamming"     => { Some(Box::new(Hamming {})) },
+		_             => { None },
+	};
 
-    Ok(())
-    
-}
+	let completer = algo.unwrap();
 
-fn HashMap_shit(){
-    let mut words= HashMap::new();
-}
+	let qualcosa = FileDictLoader {};
+	let dictionary = qualcosa.load_from(args.dictionary);
+	let results = completer.complete(args.input, dictionary);
+	for (word, dist) in results{
+		println!("> {} ({})", word, dist);
+	}
 
-
-
-fn fix_string(name: impl Display){
-    println!("Prova {}", name);
+	Ok(())
 }
